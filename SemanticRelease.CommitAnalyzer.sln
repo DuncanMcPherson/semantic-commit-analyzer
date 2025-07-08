@@ -2,6 +2,11 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SemanticRelease.CommitAnalyzer", "SemanticRelease.CommitAnalyzer.csproj", "{BA975E64-D188-47D9-BD87-1EC54BC9D0B8}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".circleci", ".circleci", "{D0FC93E3-82A7-422E-956A-E08276A538C9}"
+	ProjectSection(SolutionItems) = preProject
+		.circleci\config.yml = .circleci\config.yml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
