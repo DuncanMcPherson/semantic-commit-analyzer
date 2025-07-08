@@ -28,6 +28,7 @@ Installation should be handled by referencing the package name in your `semantic
 
 ```json
 {
+  "tagFormat": "v{version}",
   "pluginConfigs": [
     "SemanticRelease.CommitAnalysis"
   ]
@@ -35,6 +36,8 @@ Installation should be handled by referencing the package name in your `semantic
 ```
 
 The base [semantic-release](https://www.nuget.org/packages/dotnet-semantic-release/) tool will handle package resolution
+
+**NOTE:** the token "{version}" must be included in the tag format. The format can consist of any string so long as the expected token is present
 
 ## License
 
