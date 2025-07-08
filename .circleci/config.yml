@@ -1,0 +1,117 @@
+version: 2.1
+
+executors:
+  dotnet-executor:
+    docker:
+      - image: mcr.microsoft.com/dotnet/sdk:8.0
+
+jobs:
+  check-commit:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - run: |
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          echo "Commit message: $COMMIT_MSG"
+          if echo "$COMMIT_MSG" | grep -q "\[skip ci\]"; then
+            echo "Skipping due to [skip ci]"
+            circleci-agent step halt
+          fi
+  build:
+    executor: dotnet-executor
+    steps:
+      - run:
+          name: Skip if Not a Pull Request
+          command: |
+            if [ -z "$CIRCLE_PULL_REQUEST" ]; then
+              echo "Not a pull request. Skipping job."
+              circleci-agent step halt
+            fi
+      - checkout
+      - run: dotnet restore
+      - run: dotnet build --no-restore -c Release
+  pack:
+    executor: dotnet-executor
+    steps:
+      - checkout:
+          path: .
+          fetch-depth: 0
+      - run: dotnet restore
+      - run:
+          name: Install Node.js
+          command: |
+            apt-get update \
+            && apt-get install -y ca-certificates curl gnupg \
+            && mkdir -p /etc/apt/keyrings \
+            && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+                 | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+            && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" \
+                 > /etc/apt/sources.list.d/nodesource.list \
+            && apt-get update \
+            && apt-get install -y nodejs
+      - restore_cache:
+          keys:
+            - node-deps-{{ checksum "SemanticRelease.CommitAnalyzer.sln" }}
+            - node-deps-
+      - run: |
+          npm install --no-save \
+            semantic-release \
+            @semantic-release/commit-analyzer \
+            @semantic-release/release-notes-generator \
+            @semantic-release/changelog \
+            @semantic-release/exec \
+            @semantic-release/git \
+            @semantic-release/github
+      - run: npx semantic-release
+      - run: dotnet build --no-restore -c Release
+      - run: dotnet pack --no-build -o ./artifacts -c Release
+      - persist_to_workspace:
+          root: artifacts
+          paths:
+            - "*.nupkg"
+      - save_cache:
+          key: node-deps-{{ checksum "SemanticRelease.CommitAnalyzer.sln" }}
+          paths: ~/.npm
+  publish:
+    executor: dotnet-executor
+    steps:
+      - attach_workspace:
+          at: ./artifacts
+      - run: ls -R
+      - run:
+          name: Validate presence of API Key
+          command: 'echo "Key is: ${NugetAuthentication:0:4}****"'
+      - run:
+          name: Push to NuGet
+          command: |
+            dotnet nuget push "artifacts/*.nupkg" \
+              --source "https://api.nuget.org/v3/index.json" \
+              --api-key "$NugetAuthentication" \
+              --skip-duplicate
+
+workflows:
+  release:
+    jobs:
+      - check-commit:
+          filters:
+            branches:
+              only: master
+            tags:
+              ignore: /.*/
+      - pack:
+          context: DeploymentKeys
+          requires:
+            - check-commit
+      - publish:
+          context: DeploymentKeys
+          requires:
+            - pack
+  pr-checks:
+    jobs:
+      - build:
+          filters:
+            branches:
+              ignore: master
+            tags:
+              ignore: /.*/
