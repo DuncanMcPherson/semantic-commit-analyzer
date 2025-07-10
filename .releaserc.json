@@ -13,7 +13,7 @@
     [
       "@semantic-release/exec",
       {
-        "publishCmd": "dotnet build -c Release --no-build && dotnet pack --no-build -c Release -o ./artifacts -p:Version ${nextRelease.version} -p:PackageReleaseNotes \"${nextRelease.version}\""
+        "publishCmd": "./scripts/build-and-pack.sh ${nextRelease.version} '${nextRelease.notes}'"
       }
     ],
     [
