@@ -13,7 +13,7 @@
     [
       "@semantic-release/exec",
       {
-        "prepareCmd": "sed -i \"s|<Version>.*</Version>|<Version>${nextRelease.version}</Version>|\" SemanticRelease.CommitAnalyzer.csproj"
+        "publishCmd": "dotnet build -c Release --no-build && dotnet pack --no-build -c Release -o ./artifacts -p:Version ${nextRelease.version} -p:PackageReleaseNotes \"${nextRelease.version}\""
       }
     ],
     [

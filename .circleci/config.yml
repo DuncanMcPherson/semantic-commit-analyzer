@@ -52,7 +52,7 @@ jobs:
             && apt-get install -y nodejs
       - restore_cache:
           keys:
-            - node-deps-{{ checksum "SemanticRelease.CommitAnalyzer.sln" }}
+            - node-deps-{{ checksum "SemanticRelease.CommitAnalysis.sln" }}
             - node-deps-
       - run: |
           npm install --no-save \
@@ -64,14 +64,12 @@ jobs:
             @semantic-release/git \
             @semantic-release/github
       - run: npx semantic-release
-      - run: dotnet build --no-restore -c Release
-      - run: dotnet pack --no-build -o ./artifacts -c Release
       - persist_to_workspace:
           root: artifacts
           paths:
             - "*.nupkg"
       - save_cache:
-          key: node-deps-{{ checksum "SemanticRelease.CommitAnalyzer.sln" }}
+          key: node-deps-{{ checksum "SemanticRelease.CommitAnalysis.sln" }}
           paths: ~/.npm
   publish:
     executor: dotnet-executor
