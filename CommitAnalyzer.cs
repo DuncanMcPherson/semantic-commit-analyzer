@@ -31,11 +31,10 @@ namespace SemanticRelease.CommitAnalyzer
                 {
                     Console.WriteLine($"Last tag is {lastTag.FriendlyName} at {lastTag.Target.Sha}");
                 }
-                var commits = await GetCommitsSinceLastTagAsync(context, repo, lastTag);
+                var commits = context.PluginData["commits"] as List<Commit> ?? await GetCommitsSinceLastTagAsync(context, repo, lastTag);
                 var releaseType = DetermineReleaseType(commits);
                 var nextVersion = CalculateVersionFromTagAndReleaseType(lastTag, releaseType, context.Config.TagFormat);
                 context.PluginData["releaseType"] = releaseType.ToString();
-                context.PluginData["commits"] = commits;
                 context.PluginData["nextVersion"] = nextVersion;
                 Console.WriteLine($"Step 'AnalyzeCommits' for plugin '{Name}' completed successfully.");
             });
